@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Encrypted Credential</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.2/css/bulma.min.css">
+    <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/aes.js"></script>
+    <script src="https://unpkg.com/vue/dist/vue.js"></script>
+</head>
+<body>
+    <div id="app">
+
+        <div v-if="views.isStart">
+            <section class="hero is-fullheight">
+                <div class="hero-body">
+                    <div class="container has-text-centered">
+
+                        <form @submit.prevent="UploadFile">
+
+                                <span v-if="inputs.isUpload.fileIsUploaded" class="field tag is-success">{{ inputs.isUpload.fileSuccesfulUploadedMsg }}</span>
+
+                                <div v-else class="field is-boxed is-grouped is-grouped-centered is-centered">
+                                        <label class="file-label">
+                                            <input class="file-input" type="file" name="resume" @change="uploadedFile">
+                                            <span class="file-cta">
+                                            <span class="file-icon">
+                                                <i class="fas fa-upload"></i>
+                                            </span>
+                                            <span class="file-label">
+                                                Choose a file…
+                                            </span>
+                                            </span>
+                                        </label>
+                                        </div>
+
+                                <div class="field is-grouped is-grouped-centered">
+                                    <p class="control has-icons-left">
+                                        <input v-model="inputs.isUpload.password" class="input" type="password" placeholder="Insert Password" required>
+                                        <span class="icon is-small is-left">
+                                            <i class="fas fa-lock"></i>
+                                        </span>
+                                    </p>
+                                </div>
+
+                                <div class="field is-grouped is-grouped-centered">
+                                    <p class="control">
+                                        <button class="button is-link" type="submit">
+                                            Log In
+                                        </button>
+                                    </p>
+                                </div>
+                        </form>
+                        
+                        <hr>
+
+                        <div class="field is-grouped is-grouped-centered">
+                            <p class="control">
+                                <button class="button is-success" @click="showView('isCreate')">
+                                    Create New
+                                </button>
+                            </p>
+                        </div>
+                        
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div v-if="views.isCreate">
+                <section class="hero is-fullheight">
+                    <div class="hero-body">
+                        <div class="container has-text-centered">
+                                 
+                            <form @submit.prevent="CreatingNewFile">
+                                    Suggest:
+                                    <p class="help">
+                                        <ul class="menu-list">
+                                            <li>At least 1 Uppercase</li>
+                                            <li>At least 1 Lowercase</li>
+                                            <li>At least 1 Number</li>
+                                            <li>At least 1 Symbol, symbol allowed --> !@#$%^&*_=+-</li>
+                                            <li>Min 8 chars</li>
+                                        </ul>
+                                    </p>
+                                    <br>
+                                <div class="field is-grouped is-grouped-centered">
+                                    <p class="control has-icons-left">
+                                        <input v-model="inputs.isCreate.password" class="input" type="password" placeholder="Insert Password" required>
+                                        <span class="icon is-small is-left">
+                                            <i class="fas fa-lock"></i>
+                                        </span>
+                                    </p>
+                                </div>
+                                <div class="field is-grouped is-grouped-centered">
+                                    <p class="control">
+                                        <button class="button is-success" type="submit">
+                                            Create File
+                                        </button>
+                                    </p>
+                                </div>
+                            </form>    
+                        
+                            <hr>
+
+                            <div class="field is-grouped is-grouped-centered">
+                                <p class="control">
+                                    <button class="button is-success" @click="showView('isStart')">
+                                        Back To Upload
+                                    </button>
+                                </p>
+                            </div>
+
+                        </div>
+                    </div>
+                </section>
+        </div>
+
+        <div v-if="views.isDashboard">
+
+            <section class="hero">
+                <div class="hero-body">
+                    <div class="container has-text-centered">
+                                           
+                        <div class="container"> 
+                            <table class="table is-bordered" style="margin: auto;">
+                                <thead>
+                                    <tr>
+                                        <th v-for="th in window.AppConst.DBFields"><abbr :title="th">{{th}}</abbr></th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="(v,k) in DB">
+                                        <td v-for="(f,t) in v">
+                                            <div v-if="t === 'password'" class="has-text-left">
+                                                
+                                                <div style="float: left;">
+                                                    <div v-if="showedPass.indexOf(k) !== -1">
+                                                        <input class="input" type="text" :value="f" :id="'copy-pass-'+k">
+                                                    </div>
+                                                    <div v-else>
+                                                        <input class="input" type="password" :value="f" :id="'copy-pass-'+k">
+                                                    </div>
+                                                </div>
+                                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                                <div style="float: right;">
+
+                                                    <div v-if="showedPass.indexOf(k) !== -1">
+                                                        <a class="button is-success" v-on:click="HidePassword(k)">Hide</a>
+                                                        <a class="button is-success" v-on:click="CopyToClipBoardPass(k)">Copy</a>
+                                                    </div>
+                                                    <div v-else>
+                                                        <a class="button is-success" v-on:click="ShowPassword(k)">Show</a>
+                                                        <a disabled class="button is-success">Copy</a>
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+                                            <div v-else>{{f}}</div>
+                                        </td>
+                                        <td>
+                                            <div class="has-text-centered">
+                                                <span class="icon is-medium" v-on:click="OpenAddOrEditModal(k)">
+                                                    <i class="fas fa-edit" style="cursor: pointer;" ></i>
+                                                </span>
+                                                <span class="icon is-medium" v-on:click="DeleteRow(k)">
+                                                    <i class="fas fa-ban" style="cursor: pointer;"></i>
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <button class="button is-success" style="margin: 10px;" v-on:click="SaveFile">Save And Download</button> 
+                        <button class="button is-warning" style="margin: 10px;" v-on:click="OpenAddOrEditModal(-1)">AddRow</button>
+
+                    </div>
+                </div>
+            </section>
+        
+        </div>
+        <div id="modals-here"></div>
+    </div>
+    <div id="copy-to-buffer"></div>
+</body>
+<script type="application/javascript">
+
+var app = new Vue({
+    data: function(){
+        return {
+            window: window,
+            views: {
+                isStart: false,
+                isCreate: false,
+                isDashboard: false,
+            },
+            inputs: {
+                isCreate: {
+                    password: null
+                },
+                isUpload: {
+                    password: null,
+                    fileSuccesfulUploadedMsg: "The File was successful uploaded",
+                    fileIsUploaded: false,
+                    encriptedStr: null,
+                }
+            },
+            showedPass: [],
+            filePassword: null,
+            DB: []
+        }
+    },
+    methods: {
+        showView: function(view){
+            for(var i in this.views){ this.views[i] = false; }
+            this.views[view] = true;
+        },
+        uploadedFile: function(evt){
+            var f = evt.target.files[0];
+            if(f) {
+                var r = new FileReader();
+                r.onload = () => { this.procesingUploadedFile( r.result.toString() ); }
+                r.readAsText(f);
+            }
+            else
+            { alert("Failed to load file"); }
+        },
+        procesingUploadedFile: function(e){
+            this.inputs.isUpload.fileIsUploaded = true;
+            this.inputs.isUpload.encriptedStr = e;
+        },
+        UploadFile: function(){
+            if( this.inputs.isUpload.encriptedStr === null)
+            { alert("Upload File"); return; }
+            
+            try
+            {
+                var decyptedStr = window.AppFun.GetDecryptedStr( this.inputs.isUpload.encriptedStr, this.inputs.isUpload.password );
+                var parseDecStr = JSON.parse(decyptedStr);
+
+                if( typeof parseDecStr !== "object" )
+                { throw ""; }
+                if( parseDecStr.check !== window.AppDefaultData.check )
+                { throw ""; }
+                this.filePassword = this.inputs.isUpload.password;
+                this.DB = parseDecStr.DB;
+            }
+            catch(e)
+            { alert("Error, cant decrypt your file"); return; }
+            this.showView("isDashboard");
+        },
+        CreatingNewFile: function(){
+            var encryptionData = window.AppFun.GetEncryptedStr( JSON.stringify( window.AppDefaultData ), this.inputs.isCreate.password );
+            window.AppFun.DownloadFile(window.AppConst.EncryptedFileName, encryptionData);
+            this.showView("isStart");
+        },
+        SaveFile: function(){
+            var saveData = window.AppDefaultData;
+            saveData.DB = this.DB;
+            var encryptionData = window.AppFun.GetEncryptedStr( JSON.stringify( saveData ), this.filePassword );
+            window.AppFun.DownloadFile( this.window.AppConst.EncryptedFileName, encryptionData );
+        },
+        OpenAddOrEditModal: function( keyDB ){
+
+            var url = "", userName = "", password = "";
+            if( keyDB !== -1 ){
+                url = this.DB[keyDB].url;
+                userName = this.DB[keyDB].userName;
+                password = this.DB[keyDB].password;
+            }
+
+            var modalBodyHTML =  '<form id="add-or-edit-form"><div class="field"><div class="control"><input class="input" name="url" type="text" placeholder="Insert Url" value="'+url+'" required></div></div><div class="field"><div class="control"><input class="input" name="user_name" type="text" placeholder="Insert User Name" value="'+userName+'" required></div></div><div class="field"><div class="control"><input id="modal-password" class="input" name="password" type="text" placeholder="Insert Password" value="'+password+'" required></div></div><div class="field"><div class="control"><div class="buttons are-small"><a class="button" onclick="window.AppFun.GenerateRandomPassword()">Generate Random Password</a></div></div></div></form>';
+
+            var _this = this;
+            this.CreateAModal("Create Or Edit", modalBodyHTML, function(){
+                var myForm = document.getElementById("add-or-edit-form");
+                var d = {};
+                for (var i = 0; i < myForm.elements.length; i++) { d[myForm.elements[i].name] = myForm.elements[i].value; }
+
+                if( d.url === null || d.url === "" )
+                { alert("Insert URL"); return false; }
+                
+                if( d.user_name === null || d.user_name === "" )
+                { alert("Insert User Name"); return false; }
+
+                if( d.password === null || d.password === "" )
+                { alert("Insert Password"); return false; }
+
+                if(keyDB !== -1)
+                { _this.EditRow(keyDB, d); }
+                else
+                { _this.AddRow(d); }
+                return true;
+            });
+        },
+        AddRow: function(d){
+            this.DB.push( 
+                {
+                    url: d.url,
+                    userName: d.user_name,
+                    password: d.password,
+                }
+            );
+        },
+        EditRow: function(k,d){
+            this.DB[k].url = d.url;
+            this.DB[k].userName = d.user_name;
+            this.DB[k].password = d.password;
+        },
+        DeleteRow(k){
+            var modalBodyHTML = "<p>Are you sure you want to delete this item?</p>";
+            var _this = this;
+            this.CreateAModal("Create Or Edit", modalBodyHTML, function(){
+                _this.$delete(_this.DB, k);
+                return true;
+            });
+        },
+        CreateAModal: function(title = "", bodyHTML = "", okCallback = null){
+            
+            var mainModal = document.createElement( "div" );
+            mainModal.setAttribute("class", "modal is-active" );
+
+            var modalBackground = document.createElement( "div" );
+            modalBackground.setAttribute("class", "modal-background" );
+
+            var modalCard = document.createElement( "div" );
+            modalCard.setAttribute("class","modal-card" );
+            
+            if(title !== "")
+            {
+                var modalHeader = document.createElement( "header" );
+                modalHeader.setAttribute("class", "modal-card-head" );
+
+                var headP = document.createElement( "p" );
+                headP.setAttribute("class", "modal-card-title" );
+
+                var headButton = document.createElement( "header" );
+                headButton.setAttribute("class", "delete" );
+                headButton.setAttribute("aria-label", "close");
+                headButton.addEventListener( 'click', this.CloseActiveModal );
+
+                modalHeader.appendChild(headP);
+                modalHeader.appendChild(headButton);
+
+                modalCard.appendChild(modalHeader);
+            }
+
+            if(bodyHTML !== "")
+            {
+                var modalSection = document.createElement( "section" );
+                modalSection.setAttribute("class", "modal-card-body" );
+                modalSection.innerHTML = bodyHTML;
+
+                modalCard.appendChild(modalSection);
+            }
+
+            if( okCallback !== null )
+            {
+                var modalFoter = document.createElement( "footer" );
+                modalFoter.setAttribute("class", "modal-card-foot" );
+
+                footerOKBtn = document.createElement( "button" );
+                footerOKBtn.setAttribute("class", "button is-success" );
+                var _this = this;
+                footerOKBtn.addEventListener("click", function(){
+                    if( okCallback() ){ _this.CloseActiveModal(); }
+                });
+                footerOKBtn.innerHTML = "Save";
+
+                footerCancelBtn = document.createElement( "button" );
+                footerCancelBtn.setAttribute("class", "button" );
+                footerCancelBtn.addEventListener("click", this.CloseActiveModal );
+                footerCancelBtn.innerHTML = "Cancel";
+
+                modalFoter.appendChild(footerOKBtn);
+                modalFoter.appendChild(footerCancelBtn);
+
+                modalCard.appendChild(modalFoter);
+            }
+
+            mainModal.appendChild(modalBackground);
+            mainModal.appendChild(modalCard);
+
+            var e = document.getElementById( "modals-here" );
+            e.appendChild(mainModal);
+        },
+        CloseActiveModal: function(){
+            var d = document.getElementById("modals-here");
+            d.innerHTML = "";
+        },
+        CopyToClipBoardPass: function(k){
+            var copyText = document.getElementById("copy-pass-"+k);
+            copyText.select();
+            document.execCommand("copy");
+        },
+        ShowPassword: function(k){
+            this.showedPass.push(k);
+        },
+        HidePassword: function(k){
+            if( this.showedPass.indexOf(k) !== -1 )
+            { this.$delete(this.showedPass, this.showedPass.indexOf(k)); }
+        }
+    },
+    mounted: function(){ this.showView( "isStart" ); }
+}).$mount('#app');
+
+window.AppFun = {
+    DownloadFile: function(filename, data){
+        var element = document.createElement('a');
+        element.setAttribute('href', 'data:enc/plain;content-disposition:attachment;charset=utf-8,' + encodeURIComponent(data));
+        element.setAttribute('download', filename);
+        element.style.display = 'none';
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+    },
+    GetEncryptedStr: function(stringForEncryption, secretEncryptionPhrase){
+        return CryptoJS.AES.encrypt(stringForEncryption, secretEncryptionPhrase.toString()).toString();
+    },
+
+    GetDecryptedStr: function(encyptedStr, secretEncryptionPhrase){
+        return CryptoJS.AES.decrypt(encyptedStr, secretEncryptionPhrase).toString(CryptoJS.enc.Utf8);
+    },
+    GenerateRandomPassword: function(inputID = "", length = 25){
+        var text = "";
+        var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789`~!@#$%^&*()_+-=/*-[];'.,><";
+        for (var i = 0; i < length; i++)
+        { text += possible.charAt(Math.floor(Math.random() * possible.length)); }
+        document.getElementById("modal-password").value = text;
+    }
+};
+window.AppConst = {
+    EncryptedFileName: "AnonymousCredentials",
+    DBFields: {
+        "url": "URL",
+        "userName": "User Name",
+        "password": "Password",
+    }
+};
+window.AppDefaultData = {
+    check: "AnonymousCredentials",
+    DB: []
+};
+</script>
+</html>
